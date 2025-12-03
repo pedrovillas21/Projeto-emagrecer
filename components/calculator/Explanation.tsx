@@ -3,7 +3,6 @@ import { Info, Battery, Flame, TrendingDown } from 'lucide-react';
 export const Explanation = () => {
     return (
         <section className="mt-8 grid gap-4 md:grid-cols-3 text-left">
-            {/* Card TMB */}
             <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 hover:border-blue-200 transition-colors">
                 <div className="flex items-center gap-2 mb-2 text-blue-700 font-bold text-sm">
                     <Battery size={18} />
@@ -14,7 +13,6 @@ export const Explanation = () => {
                 </p>
             </div>
 
-            {/* Card GET/TDEE */}
             <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 hover:border-emerald-200 transition-colors">
                 <div className="flex items-center gap-2 mb-2 text-emerald-700 font-bold text-sm">
                     <Flame size={18} />
@@ -25,7 +23,6 @@ export const Explanation = () => {
                 </p>
             </div>
 
-            {/* Card Déficit */}
             <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 hover:border-red-200 transition-colors">
                 <div className="flex items-center gap-2 mb-2 text-red-700 font-bold text-sm">
                     <TrendingDown size={18} />

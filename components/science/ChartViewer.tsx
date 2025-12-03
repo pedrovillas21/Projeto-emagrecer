@@ -27,7 +27,7 @@ export const ChartViewer = ({ data, isGain }: ChartViewerProps) => {
                         <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} domain={['auto', 'auto']} />
 
                         <Tooltip
-                            contentStyle={{ backgroundColor: '#fff', border: 'none', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                             formatter={(value: number, name: string) => {
                                 if (String(name).includes('Peso')) return [`${value} kg`, 'Peso Corporal'];
                                 return [`${value} kcal`, 'Metabolismo Basal'];
@@ -42,9 +42,12 @@ export const ChartViewer = ({ data, isGain }: ChartViewerProps) => {
                 </ResponsiveContainer>
             </div>
 
-            {/* Insight Box */}
-            <div className={`mt-6 text-sm p-4 rounded border ${isGain ? 'bg-purple-50 border-purple-100' : 'bg-slate-50 border-slate-100'}`}>
-                <p className={isGain ? 'text-purple-800' : 'text-slate-600'}>
+            <div className={`mt-6 text-sm p-4 rounded border transition-colors ${
+                isGain
+                    ? 'bg-purple-50 border-purple-100 dark:bg-purple-900/20 dark:border-purple-800'
+                    : 'bg-slate-50 border-slate-100 dark:bg-slate-900/50 dark:border-slate-700'
+            }`}>
+                <p className={isGain ? 'text-purple-800 dark:text-purple-300' : 'text-slate-600 dark:text-slate-400'}>
                     <strong>Análise Científica:</strong>
                     {isGain
                         ? " O ganho de massa exige superávit calórico progressivo. Note que o metabolismo (linha tracejada) sobe junto com o peso, pois tecidos maiores gastam mais energia para manutenção."

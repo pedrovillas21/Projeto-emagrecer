@@ -1,28 +1,25 @@
 import { BookOpen } from 'lucide-react';
 
-// 1. Definimos os tipos permitidos para as cores
 type ReferenceColor = 'blue' | 'emerald' | 'purple';
 
-// 2. Definimos a estrutura dos estilos para cada cor (sem gambiarra de split)
 const colorStyles: Record<ReferenceColor, { badge: string; border: string; link: string }> = {
     blue: {
-        badge: "text-blue-600 bg-blue-50",
-        border: "hover:border-blue-400",
-        link: "text-blue-600"
+        badge: "text-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-300",
+        border: "hover:border-blue-400 dark:hover:border-blue-500",
+        link: "text-blue-600 dark:text-blue-400"
     },
     emerald: {
-        badge: "text-emerald-600 bg-emerald-50",
-        border: "hover:border-emerald-400",
-        link: "text-emerald-600"
+        badge: "text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 dark:text-emerald-300",
+        border: "hover:border-emerald-400 dark:hover:border-emerald-500",
+        link: "text-emerald-600 dark:text-emerald-400"
     },
     purple: {
-        badge: "text-purple-600 bg-purple-50",
-        border: "hover:border-purple-400",
-        link: "text-purple-600"
+        badge: "text-purple-600 bg-purple-50 dark:bg-purple-900/30 dark:text-purple-300",
+        border: "hover:border-purple-400 dark:hover:border-purple-500",
+        link: "text-purple-600 dark:text-purple-400"
     }
 };
 
-// 3. Interface para as props do componente (Adeus 'any')
 interface ReferenceCardProps {
     category: string;
     color: ReferenceColor;
@@ -35,9 +32,9 @@ interface ReferenceCardProps {
 
 export const References = () => {
     return (
-        <section className="pt-10 border-t border-slate-300 font-sans">
-            <h3 className="text-lg font-bold mb-6 flex items-center gap-2 text-slate-900">
-                <BookOpen size={20} className="text-slate-700"/> Referências e Validação Científica
+        <section className="pt-10 border-t border-slate-300 dark:border-slate-700 font-sans transition-colors">
+            <h3 className="text-lg font-bold mb-6 flex items-center gap-2 text-slate-900 dark:text-slate-100">
+                <BookOpen size={20} className="text-slate-700 dark:text-slate-400"/> Referências e Validação Científica
             </h3>
 
             <div className="grid gap-6 md:grid-cols-2">
@@ -71,19 +68,17 @@ export const References = () => {
     );
 };
 
-// 4. Componente tipado corretamente
 const ReferenceCard = ({ category, color, title, subtitle, desc, link, fullWidth }: ReferenceCardProps) => {
-    // Acessamos os estilos de forma segura
     const styles = colorStyles[color];
 
     return (
-        <div className={`bg-white p-5 rounded-lg border border-slate-200 transition-colors ${styles.border} ${fullWidth ? 'md:col-span-2' : ''}`}>
+        <div className={`bg-white dark:bg-slate-800 p-5 rounded-lg border border-slate-200 dark:border-slate-700 transition-colors ${styles.border} ${fullWidth ? 'md:col-span-2' : ''}`}>
       <span className={`text-xs font-bold px-2 py-1 rounded mb-3 inline-block ${styles.badge}`}>
         {category}
       </span>
-            <p className="text-sm font-bold text-slate-900 mb-2">{title}</p>
-            <p className="text-xs text-slate-600 mb-3 italic">&quot;{subtitle}&quot;</p>
-            <p className="text-xs text-slate-500 leading-relaxed">{desc}</p>
+            <p className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-2">{title}</p>
+            <p className="text-xs text-slate-600 dark:text-slate-400 mb-3 italic">&quot;{subtitle}&quot;</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{desc}</p>
             <a href={link} target="_blank" rel="noopener noreferrer" className={`mt-3 text-xs font-bold hover:underline flex items-center ${styles.link}`}>
                 Ler estudo &rarr;
             </a>

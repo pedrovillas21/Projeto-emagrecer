@@ -21,18 +21,14 @@ export const simulateWeightLoss = (
     let currentWeek = 0;
     const data = [];
 
-    // Detecta se é Ganho (Bulking) ou Perda (Cutting)
     const isGain = goalWeight > startWeight;
 
-    // Limite de segurança: 104 semanas (2 anos)
-    // A condição do loop agora verifica as duas direções
     while (
         (isGain ? currentWeight < goalWeight : currentWeight > goalWeight) &&
         currentWeek <= 104
         ) {
         const tmb = calculateTMB(currentWeight, height, age, gender);
 
-        // Cálculo da mudança baseada na porcentagem do peso ATUAL
         const weightChange = currentWeight * weeklyPercent;
 
         data.push({
@@ -41,7 +37,6 @@ export const simulateWeightLoss = (
             metabolismo: Math.round(tmb),
         });
 
-        // Se for ganho, soma. Se for perda, subtrai.
         if (isGain) {
             currentWeight += weightChange;
         } else {
@@ -51,7 +46,6 @@ export const simulateWeightLoss = (
         currentWeek++;
     }
 
-    // Adiciona o ponto final para o gráfico fechar bonito na meta
     if (data.length > 0) {
         const finalTmb = calculateTMB(currentWeight, height, age, gender);
         data.push({

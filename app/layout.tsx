@@ -1,23 +1,14 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google"; // Exemplo usando Inter em vez de Geist
 import "./globals.css";
-import { Inter } from "next/font/google";
+import { ThemeProvider } from "@/providers/ThemeProvider";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 const inter = Inter({ subsets: ["latin"] });
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
-    title: "Protocolo Emagrecer | Calculadora Científica",
-    description: "Ferramenta baseada em termodinâmica para cálculo de TMB e projeção de emagrecimento.",
+    title: "Protocolo Emagrecer",
+    description: "Calculadora Científica",
 };
 
 export default function RootLayout({
@@ -27,7 +18,15 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="pt-BR">
-        <body className={inter.className}>{children}</body>
+        {/* Adicione a classe 'antialiased' do Tailwind se quiser fontes mais nítidas */}
+        <body className={`${inter.className} antialiased transition-colors duration-300`}>
+        <ThemeProvider>
+            <div className="absolute top-4 right-4 z-50">
+                <ThemeToggle />
+            </div>
+            {children}
+        </ThemeProvider>
+        </body>
         </html>
     );
 }

@@ -1,10 +1,8 @@
 import { useState } from 'react';
 import { calculateTMB } from '@/utils/math';
-// Importamos a tipagem que acabamos de criar
 import { CalculationResult, CalculatorFormState } from '@/types';
 
 export function useCalculator() {
-    // Agora o form usa a interface correta
     const [form, setForm] = useState<CalculatorFormState>({
         gender: 'male',
         weight: '',
@@ -13,8 +11,6 @@ export function useCalculator() {
         activity: '1.2',
         deficitPercent: 0.7
     });
-
-    // O result pode ser CalculationResult OU null (antes de calcular)
     const [result, setResult] = useState<CalculationResult | null>(null);
     const [error, setError] = useState('');
 
@@ -47,7 +43,6 @@ export function useCalculator() {
         const fat = w * 0.8;
         const carbs = Math.max(0, (caloriesToEat - (protein * 4) - (fat * 9)) / 4);
 
-        // O TypeScript agora sabe que isso bate com a interface CalculationResult
         setResult({
             tmb,
             tdee,
