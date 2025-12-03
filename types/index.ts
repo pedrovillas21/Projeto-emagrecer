@@ -1,4 +1,3 @@
-// src/types/index.ts
 
 export interface Macros {
     protein: number;
@@ -22,7 +21,7 @@ export interface SimulationPoint {
 }
 
 export interface CalculatorFormState {
-    gender: 'male' | 'female' | string; // string adicionado para compatibilidade com select html
+    gender: 'male' | 'female' | string;
     weight: string;
     height: string;
     age: string;
@@ -34,7 +33,6 @@ export interface SimulationState {
     gender: string;
     age: number;
     height: number;
-    activity: number;
     startWeight: number;
     goalWeight: number;
     pace: number;

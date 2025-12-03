@@ -11,7 +11,7 @@ export const WeightLossChart = () => {
         gender: 'male',
         age: 30,
         height: 170,
-        activity: 1.375,
+        // activity removido
         startWeight: 90,
         goalWeight: 75,
         pace: 0.01
@@ -26,7 +26,6 @@ export const WeightLossChart = () => {
             inputs.height,
             inputs.age,
             inputs.gender,
-            inputs.activity,
             inputs.pace
         );
     }, [inputs]);
@@ -34,7 +33,6 @@ export const WeightLossChart = () => {
     return (
         <section className="bg-white dark:bg-slate-800 p-6 md:p-8 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 font-sans transition-colors duration-300">
 
-            {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
                 <h2 className="text-xl font-bold flex items-center gap-2 text-slate-800 dark:text-slate-100">
                     <Activity size={20} className="text-blue-600 dark:text-blue-400"/>

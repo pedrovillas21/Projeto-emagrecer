@@ -21,7 +21,8 @@ export const SimulationControls = ({ inputs, setInputs }: SimulationControlsProp
                 <Settings2 size={14}/> Parâmetros da Simulação
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 border-b border-slate-200 dark:border-slate-700 pb-4">
+            {/* Linha 1: Dados Biológicos */}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4 border-b border-slate-200 dark:border-slate-700 pb-4">
                 <Select
                     label="Gênero"
                     value={inputs.gender}
@@ -36,18 +37,9 @@ export const SimulationControls = ({ inputs, setInputs }: SimulationControlsProp
                     label="Altura" type="number" value={inputs.height}
                     onChange={(e) => handleChange('height', Number(e.target.value))} suffix="cm"
                 />
-                <Select
-                    label="Nível de Atividade" value={inputs.activity}
-                    onChange={(e) => handleChange('activity', Number(e.target.value))}
-                    options={[
-                        { value: 1.2, label: 'Sedentário (1.2)' },
-                        { value: 1.375, label: 'Leve (1.375)' },
-                        { value: 1.55, label: 'Moderado (1.55)' },
-                        { value: 1.725, label: 'Alto (1.725)' },
-                    ]}
-                />
             </div>
 
+            {/* Linha 2: Dados da Dieta */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <Input
                     label="Peso Inicial" type="number" value={inputs.startWeight}
