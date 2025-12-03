@@ -1,7 +1,7 @@
 
 export interface Macros {
     protein: number;
-    fat: number;
+    fats: number;
     carbs: number;
 }
 
@@ -12,6 +12,8 @@ export interface CalculationResult {
     caloriesToEat: number;
     weeklyLossKg: number;
     macros: Macros;
+    targetCalories: number;
+    equation?: string;
 }
 
 export interface SimulationPoint {

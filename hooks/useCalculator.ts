@@ -37,6 +37,7 @@ export function useCalculator() {
         const tdee = tmb * parseFloat(form.activity);
         const weeklyLossKg = w * (form.deficitPercent / 100);
         const dailyDeficit = (weeklyLossKg * 7700) / 7;
+
         const caloriesToEat = tdee - dailyDeficit;
 
         const protein = w * 1.8;
@@ -49,7 +50,12 @@ export function useCalculator() {
             dailyDeficit,
             caloriesToEat,
             weeklyLossKg,
-            macros: { protein, fat, carbs }
+            targetCalories: Math.round(caloriesToEat),
+            macros: {
+                protein: Math.round(protein),
+                fats: Math.round(fat),
+                carbs: Math.round(carbs)
+            }
         });
     };
 

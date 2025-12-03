@@ -26,7 +26,7 @@ export const ResultCard = ({ result, form }: ResultCardProps) => {
                 {/* Macros */}
                 <div className="pt-4 border-t border-emerald-200 dark:border-emerald-800 grid grid-cols-3 gap-2 text-center text-sm text-emerald-800 dark:text-emerald-200">
                     <MacroBox label="Prot (1.8g)" value={result.macros.protein} />
-                    <MacroBox label="Gord (0.8g)" value={result.macros.fat} />
+                    <MacroBox label="Gord (0.8g)" value={result.macros.fats} />
                     <MacroBox label="Carbo" value={result.macros.carbs} />
                 </div>
             </div>

@@ -1,4 +1,5 @@
 "use client";
+
 import Link from 'next/link';
 import { Calculator, ArrowRight, AlertCircle } from 'lucide-react';
 import { useCalculator } from '@/hooks/useCalculator';
@@ -6,13 +7,15 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { ResultCard } from '@/components/calculator/ResultCard';
 import { Explanation } from '@/components/calculator/Explanation';
+// 1. Importamos o componente novo
+import { DietGenerator } from '@/components/ai/DietGenerator';
 
 export default function Home() {
     const { form, updateForm, result, error, calculate } = useCalculator();
 
     return (
-        <main className="min-h-screen flex flex-col items-center justify-center p-4 font-sans text-slate-900 dark:text-slate-100">
-            <div className="max-w-lg w-full bg-white dark:bg-slate-800 rounded-2xl shadow-xl overflow-hidden border border-slate-100 dark:border-slate-700 transition-colors duration-300">
+        <main className="min-h-screen flex flex-col items-center justify-center p-4 font-sans text-slate-900 dark:text-slate-100 my-8">
+            <div className="max-w-2xl w-full bg-white dark:bg-slate-800 rounded-2xl shadow-xl overflow-hidden border border-slate-100 dark:border-slate-700 transition-colors duration-300">
 
                 <div className="bg-blue-600 dark:bg-blue-700 p-6 text-white text-center">
                     <h1 className="text-2xl font-bold flex items-center justify-center gap-2">
@@ -86,8 +89,8 @@ export default function Home() {
                         <div className="flex justify-between items-center mb-2">
                             <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Ritmo de Perda</label>
                             <span className="text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/40 px-2 py-1 rounded">
-                  {form.deficitPercent}% / semana
-                </span>
+                                {form.deficitPercent}% / semana
+                            </span>
                         </div>
                         <input
                             type="range" min="0.5" max="1.0" step="0.1"
@@ -108,7 +111,20 @@ export default function Home() {
                         Calcular Protocolo
                     </button>
 
-                    {result && <ResultCard result={result} form={form} />}
+                    {/* Área de Resultados */}
+                    {result && (
+                        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+
+                            {/* Card com os números (TMB, TDEE) */}
+                            <ResultCard result={result} form={form} />
+
+                            {/* 2. Gerador de Dieta com IA */}
+                            <DietGenerator
+                                calories={result.targetCalories}
+                                macros={result.macros}
+                            />
+                        </div>
+                    )}
 
                     <Explanation />
 
