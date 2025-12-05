@@ -1,21 +1,24 @@
 import { useState } from 'react';
 import { calculateTMB } from '@/utils/math';
 import { CalculationResult, CalculatorFormState } from '@/types';
+// Importamos o hook do contexto atualizado
+import { useCalculatorContext } from '@/contexts/CalculatorContext';
 
 export function useCalculator() {
-    const [form, setForm] = useState<CalculatorFormState>({
-        gender: 'male',
-        weight: '',
-        height: '',
-        age: '',
-        activity: '1.2',
-        deficitPercent: 0.7
-    });
-    const [result, setResult] = useState<CalculationResult | null>(null);
+    // Pegamos tudo do contexto agora
+    const {
+        data: form,
+        updateField,
+        result,
+        setResult,
+        dietPlan,    // Podemos precisar para verificar se já existe
+        setDietPlan  // Para limpar a dieta se recalcular
+    } = useCalculatorContext();
+
     const [error, setError] = useState('');
 
     const updateForm = (key: keyof CalculatorFormState, value: string | number) => {
-        setForm(prev => ({ ...prev, [key]: value }));
+        updateField(key, value);
     };
 
     const calculate = () => {
@@ -23,27 +26,28 @@ export function useCalculator() {
         const w = parseFloat(form.weight);
         const h = parseFloat(form.height);
         const a = parseFloat(form.age);
+        const act = parseFloat(form.activity);
 
         if (!w || !h || !a) {
             setError("Por favor, preencha todos os campos.");
             return;
         }
-        if (w <= 0 || h <= 0 || a <= 0) {
-            setError("Peso, altura e idade devem ser maiores que zero.");
-            return;
-        }
 
+        // ... sua lógica de validação ...
+
+        // Cálculos Matemáticos
         const tmb = calculateTMB(w, h, a, form.gender);
-        const tdee = tmb * parseFloat(form.activity);
+        const tdee = tmb * act;
         const weeklyLossKg = w * (form.deficitPercent / 100);
         const dailyDeficit = (weeklyLossKg * 7700) / 7;
-
         const caloriesToEat = tdee - dailyDeficit;
 
+        // Macros
         const protein = w * 1.8;
         const fat = w * 0.8;
         const carbs = Math.max(0, (caloriesToEat - (protein * 4) - (fat * 9)) / 4);
 
+        // 1. Salvamos o Resultado no Contexto Global
         setResult({
             tmb,
             tdee,
@@ -57,7 +61,14 @@ export function useCalculator() {
                 carbs: Math.round(carbs)
             }
         });
+
+        // 2. IMPORTANTE: Se recalculou, a dieta antiga (se houver) não vale mais.
+        // Limpamos para obrigar o usuário a gerar uma nova compatível com os novos macros.
+        if (dietPlan) {
+            setDietPlan(null);
+        }
     };
 
+    // Retornamos tudo que a Home precisa
     return { form, updateForm, result, error, calculate };
 }

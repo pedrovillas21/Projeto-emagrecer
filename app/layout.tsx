@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google"; // Exemplo usando Inter em vez de Geist
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+// 1. Importação do Provider que criamos
+import { CalculatorProvider } from "@/contexts/CalculatorContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -18,13 +20,17 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="pt-BR">
-        {/* Adicione a classe 'antialiased' do Tailwind se quiser fontes mais nítidas */}
         <body className={`${inter.className} antialiased transition-colors duration-300`}>
         <ThemeProvider>
             <div className="absolute top-4 right-4 z-50">
                 <ThemeToggle />
             </div>
-            {children}
+
+            {/* 2. Envolvendo o conteúdo das páginas com o CalculatorProvider */}
+            <CalculatorProvider>
+                {children}
+            </CalculatorProvider>
+
         </ThemeProvider>
         </body>
         </html>

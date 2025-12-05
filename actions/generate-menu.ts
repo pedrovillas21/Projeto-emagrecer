@@ -2,6 +2,7 @@
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
+// Definição das interfaces (Mantidas iguais para garantir tipagem)
 export interface FoodItem {
     item: string;
     quantity: string;
@@ -16,6 +17,7 @@ export interface Meal {
         carbs: number;
         fats: number;
     };
+    substitutions: string; // Campo obrigatório agora
 }
 
 export interface DailyPlan {
@@ -33,41 +35,47 @@ const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
 export async function generateWeeklyMenu(
     calories: number,
     macros: { protein: number; carbs: number; fats: number },
-    useWhey: boolean
+    useWhey: boolean,
+    preferences: string,
+    restrictions: string
 ): Promise<DailyPlan[] | null> {
     try {
         const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
         const wheyInstruction = useWhey
-            ? "O usuário USA Whey Protein. Inclua 1 dose de Whey (30g) obrigatoriamente no 'Lanche da Tarde' ou 'Café da Manhã' como fonte prática de proteína."
-            : "O usuário NÃO usa suplementos. Não sugira Whey. Bata a meta de proteínas com comida sólida (ovos, frango, atum em lata, carnes magras).";
+            ? "O usuário USA Whey Protein. Inclua 1 dose (25g) no Lanche ou Café."
+            : "O usuário NÃO usa suplementos. Bata a proteína com comida sólida.";
+
+        // Lógica para preferências vazias
+        const userLikes = preferences ? `INCLUIR OBRIGATORIAMENTE (pelo menos 3x na semana): ${preferences}` : "Sem preferências específicas.";
+        const userHates = restrictions ? `PROIBIDO INCLUIR (Alergia ou Gosto): ${restrictions}` : "Sem restrições alimentares.";
 
         const prompt = `
-      Atue como um nutricionista focado em dietas ECONÔMICAS, mas VARIADAS para o brasileiro.
+      Atue como um nutricionista esportivo rigoroso com a Tabela TACO (Tabela Brasileira de Composição de Alimentos).
       
-      METAS DIÁRIAS:
+      METAS DIÁRIAS (Seja preciso na matemática):
       - Calorias: ~${calories} kcal
       - Proteínas: ${macros.protein}g
       - Carboidratos: ${macros.carbs}g
       - Gorduras: ${macros.fats}g
 
-      REGRAS DE CUSTO-BENEFÍCIO:
-      1. USAR: Frango, Ovos, Carne Moída (Patinho/Acém), Porco (Lombo), Atum/Sardinha em lata.
-      2. CARBOIDRATOS (VARIEDADE É OBRIGATÓRIA): 
-         - Alterne entre: Arroz e Feijão (Clássico), Macarrão ao Sugo/Bolonhesa, Purê de Batata, Batata Doce Assada, Mandioca/Aipim cozido, Cuscuz.
-         - REGRA IMPORTANTE: NÃO repita "Arroz e Feijão" em todos os almoços. O usuário enjoa fácil. Tente limitar arroz e feijão a 3-4x na semana no máximo.
-      3. GORDURA: Sempre contemple o azeite/óleo usado no preparo (ex: "Fio de azeite para grelhar").
+      PREFERÊNCIAS DO PACIENTE:
+      1. ${userLikes}
+      2. ${userHates}
+      
+      REGRAS DE OURO:
+      1. PRECISÃO NUTRICIONAL: Não chute valores. Ex: 2 Pães Franceses (100g) têm ~58g de Carbo, não 20g. Ajuste as quantidades para bater a meta calórica real.
+      2. CUSTO-BENEFÍCIO: Priorize alimentos da cesta básica brasileira (Arroz, Feijão, Ovo, Frango, Banana), salvo se o usuário pediu algo diferente nas preferências.
+      3. VARIAR CARDÁPIO: Não repita o mesmo almoço todo dia.
+      4. GORDURA: Contabilize o azeite/óleo de preparo.
+      5. SUBSTITUIÇÕES: É OBRIGATÓRIO preencher o campo "substitutions" para TODAS as refeições com uma opção de troca equivalente.
 
-      ESTRUTURA (4 Refeições):
-      1. Café da Manhã 
-      2. Almoço 
-      3. Lanche da Tarde 
-      4. Jantar 
+      ESTRUTURA (4 Refeições): Café, Almoço, Lanche, Jantar.
 
       SUPLEMENTAÇÃO:
       ${wheyInstruction}
 
-      FORMATO JSON OBRIGATÓRIO (Siga EXATAMENTE esta estrutura de objetos dentro de foods):
+      FORMATO JSON OBRIGATÓRIO:
       [
         {
           "day": "Segunda-feira",
@@ -75,51 +83,39 @@ export async function generateWeeklyMenu(
             "breakfast": { 
                "name": "Café da Manhã", 
                "foods": [
-                  { "item": "Pão Francês", "quantity": "1 unidade" },
-                  { "item": "Ovos mexidos", "quantity": "2 unidades" },
-                  { "item": "Café preto", "quantity": "1 xícara" }
+                  { "item": "Pão Francês", "quantity": "1 unidade (50g)" }
                ], 
-               "calories": 300, 
-               "macros": { "protein": 15, "carbs": 25, "fats": 10 } 
+               "calories": 150, 
+               "macros": { "protein": 4, "carbs": 29, "fats": 1 },
+               "substitutions": "Opção de troca: 2 fatias de Pão Integral ou 3 torradas + 1 colher de requeijão light."
             },
             "lunch": { 
-               "name": "Almoço", 
-               "foods": [
-                  { "item": "Arroz Branco", "quantity": "150g (cozido)" },
-                  { "item": "Feijão Carioca", "quantity": "1 concha" },
-                  { "item": "Peito de Frango", "quantity": "120g" },
-                  { "item": "Azeite (preparo)", "quantity": "5ml" }
-               ],
+               "name": "Almoço",
+               "foods": [...],
                "calories": 600,
-               "macros": { "protein": 40, "carbs": 50, "fats": 15 }
-            }, 
-            "snack": { 
-               "name": "Lanche da Tarde", 
-               "foods": [{ "item": "Banana", "quantity": "1 média" }],
-               "calories": 100, "macros": { "protein": 1, "carbs": 20, "fats": 0 }
-            }, 
-            "dinner": { 
-               "name": "Jantar",
-               "foods": [{ "item": "Omelete", "quantity": "2 ovos" }],
-               "calories": 200, "macros": { "protein": 12, "carbs": 2, "fats": 15 }
-            }
+               "macros": {...},
+               "substitutions": "Troque o frango por 120g de Patinho Moído ou Tilápia."
+            },
+            "snack": { ... }, 
+            "dinner": { ... }
           }
         }
       ]
-      IMPORTANTE: GERE O CARDÁPIO COMPLETO DE SEGUNDA A DOMINGO. NÃO PARE NA QUARTA-FEIRA.
+      IMPORTANTE: Gere o cardápio completo de SEGUNDA a DOMINGO.
     `;
 
         const result = await model.generateContent({
             contents: [{ role: "user", parts: [{ text: prompt }] }],
             generationConfig: {
                 responseMimeType: "application/json",
-                // AUMENTAMOS O LIMITE AQUI:
-                maxOutputTokens: 8192, // 8k tokens é suficiente para um livro, garantindo os 7 dias
-                temperature: 0.7, // Um pouco de criatividade para variar os pratos
+                maxOutputTokens: 8192, // Aumentei o limite pois cardápios de 7 dias são longos
+                temperature: 0.7,
             },
         });
 
-        return JSON.parse(result.response.text()) as DailyPlan[];
+        const textResponse = result.response.text();
+        return JSON.parse(textResponse) as DailyPlan[];
+
     } catch (error) {
         console.error("Erro na IA:", error);
         return null;
