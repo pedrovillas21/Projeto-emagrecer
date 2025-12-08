@@ -2,7 +2,7 @@
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// Definição das interfaces (Mantidas iguais para garantir tipagem)
+// Interfaces mantidas conforme seu código
 export interface FoodItem {
     item: string;
     quantity: string;
@@ -17,7 +17,7 @@ export interface Meal {
         carbs: number;
         fats: number;
     };
-    substitutions: string; // Campo obrigatório agora
+    substitutions: string;
 }
 
 export interface DailyPlan {
@@ -46,31 +46,37 @@ export async function generateWeeklyMenu(
             ? "O usuário USA Whey Protein. Inclua 1 dose (25g) no Lanche ou Café."
             : "O usuário NÃO usa suplementos. Bata a proteína com comida sólida.";
 
-        // Lógica para preferências vazias
         const userLikes = preferences ? `INCLUIR OBRIGATORIAMENTE (pelo menos 3x na semana): ${preferences}` : "Sem preferências específicas.";
         const userHates = restrictions ? `PROIBIDO INCLUIR (Alergia ou Gosto): ${restrictions}` : "Sem restrições alimentares.";
 
+        // --- AQUI ESTÁ A MUDANÇA PRINCIPAL NO PROMPT ---
         const prompt = `
-      Atue como um nutricionista esportivo rigoroso com a Tabela TACO (Tabela Brasileira de Composição de Alimentos).
+      Atue como um nutricionista esportivo rigoroso com a Tabela TACO.
       
-      METAS DIÁRIAS (Seja preciso na matemática):
+      METAS DIÁRIAS:
       - Calorias: ~${calories} kcal
       - Proteínas: ${macros.protein}g
       - Carboidratos: ${macros.carbs}g
       - Gorduras: ${macros.fats}g
 
-      PREFERÊNCIAS DO PACIENTE:
+      PREFERÊNCIAS:
       1. ${userLikes}
       2. ${userHates}
       
       REGRAS DE OURO:
-      1. PRECISÃO NUTRICIONAL: Não chute valores. Ex: 2 Pães Franceses (100g) têm ~58g de Carbo, não 20g. Ajuste as quantidades para bater a meta calórica real.
-      2. CUSTO-BENEFÍCIO: Priorize alimentos da cesta básica brasileira (Arroz, Feijão, Ovo, Frango, Banana), salvo se o usuário pediu algo diferente nas preferências.
+      1. PRECISÃO NUTRICIONAL: Ajuste as quantidades para bater a meta calórica real.
+      2. CUSTO-BENEFÍCIO: Priorize alimentos da cesta básica brasileira.
       3. VARIAR CARDÁPIO: Não repita o mesmo almoço todo dia.
       4. GORDURA: Contabilize o azeite/óleo de preparo.
-      5. SUBSTITUIÇÕES: É OBRIGATÓRIO preencher o campo "substitutions" para TODAS as refeições com uma opção de troca equivalente.
+      
+      5. SUBSTITUIÇÕES (CRUCIAL): 
+         - O campo "substitutions" é para TROCA TOTAL do alimento principal, caso o usuário não tenha o ingrediente.
+         - PROIBIDO sugerir "adições" ou "complementos" (Ex: "Adicione mais 1 ovo para bater a meta" -> ISSO É PROIBIDO).
+         - OBRIGATÓRIO ser uma TROCA (Ex: "Se não tiver Frango (150g), coma 2 Ovos Cozidos + 50g de Queijo Branco").
+         - VOCÊ DEVE CALCULAR A QUANTIDADE EXATA PARA A TROCA TER AS MESMAS CALORIAS.
+         
 
-      ESTRUTURA (4 Refeições): Café, Almoço, Lanche, Jantar.
+      ESTRUTURA: Café, Almoço, Lanche, Jantar.
 
       SUPLEMENTAÇÃO:
       ${wheyInstruction}
@@ -87,28 +93,28 @@ export async function generateWeeklyMenu(
                ], 
                "calories": 150, 
                "macros": { "protein": 4, "carbs": 29, "fats": 1 },
-               "substitutions": "Opção de troca: 2 fatias de Pão Integral ou 3 torradas + 1 colher de requeijão light."
+               "substitutions": "Opção: 2 fatias de Pão Integral (50g) + 1 fatia de Queijo Minas (30g) para manter as 150kcal."
             },
             "lunch": { 
                "name": "Almoço",
                "foods": [...],
                "calories": 600,
                "macros": {...},
-               "substitutions": "Troque o frango por 120g de Patinho Moído ou Tilápia."
+               "substitutions": "Troca econômica: Substitua o Frango por 2 Ovos Cozidos + 50g de Feijão extra."
             },
             "snack": { ... }, 
             "dinner": { ... }
           }
         }
       ]
-      IMPORTANTE: Gere o cardápio completo de SEGUNDA a DOMINGO.
+      IMPORTANTE: Gere o cardápio de SEGUNDA a DOMINGO.
     `;
 
         const result = await model.generateContent({
             contents: [{ role: "user", parts: [{ text: prompt }] }],
             generationConfig: {
                 responseMimeType: "application/json",
-                maxOutputTokens: 8192, // Aumentei o limite pois cardápios de 7 dias são longos
+                maxOutputTokens: 8192,
                 temperature: 0.7,
             },
         });
