@@ -8,10 +8,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Loader2, ChefHat, Download, Droplet, Milk, AlertTriangle, ThumbsUp, ThumbsDown } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-// 1. Importar o hook do contexto
 import { useCalculatorContext } from '@/contexts/CalculatorContext';
 
-// Tipos auxiliares para o PDF e tratamento de dados
 type PdfWithPlugin = jsPDF & { lastAutoTable?: { finalY: number } };
 type RawFoodItem = string | { item?: string; name?: string; nome?: string; quantity?: string; qtd?: string; } | null | undefined;
 
@@ -21,12 +19,10 @@ interface DietGeneratorProps {
 }
 
 export function DietGenerator({ calories, macros }: DietGeneratorProps) {
-    // 2. Pegar os métodos do contexto para persistência
     const { dietPlan, setDietPlan } = useCalculatorContext();
 
     const [loading, setLoading] = useState(false);
 
-    // 3. Inicializar o menu lendo do contexto (se existir) para evitar regerar
     const [menu, setMenu] = useState<DailyPlan[] | null>(() => {
         if (dietPlan) {
             try {
@@ -46,10 +42,8 @@ export function DietGenerator({ calories, macros }: DietGeneratorProps) {
     const handleGenerate = async () => {
         setLoading(true);
         try {
-            // Chama a Server Action que conecta com a IA
             const data = await generateWeeklyMenu(calories, macros, useWhey, preferences, restrictions);
 
-            // 4. Atualizar o estado local e SALVAR NO CONTEXTO GLOBAL
             setMenu(data);
             setDietPlan(JSON.stringify(data));
 
@@ -60,13 +54,11 @@ export function DietGenerator({ calories, macros }: DietGeneratorProps) {
         }
     };
 
-    // Função para limpar a dieta atual e permitir gerar outra com novas preferências
     const handleReset = () => {
         setMenu(null);
         setDietPlan(null); // Limpa do contexto global também
     };
 
-    // Helper para normalizar os dados dos alimentos (que podem vir variados da IA)
     const getSafeFoodData = (food: unknown) => {
         const rawFood = food as RawFoodItem;
         if (!rawFood) return { name: "Item não identificado", qtd: "?", isOil: false, isWhey: false };
@@ -86,13 +78,11 @@ export function DietGenerator({ calories, macros }: DietGeneratorProps) {
         if (!menu) return;
         const doc = new jsPDF();
 
-        // Configuração do Cabeçalho do PDF
         doc.setFontSize(18);
         doc.text("Protocolo Emagrecer - Seu Cardápio", 14, 22);
         doc.setFontSize(10);
         doc.text(`Meta: ${calories} kcal | P: ${macros.protein}g | C: ${macros.carbs}g | G: ${macros.fats}g`, 14, 30);
 
-        // Adiciona as preferências escolhidas no cabeçalho para registro
         if (preferences) doc.text(`Gosta: ${preferences}`, 14, 36);
         if (restrictions) doc.text(`Evita: ${restrictions}`, 14, 42);
 
@@ -106,30 +96,25 @@ export function DietGenerator({ calories, macros }: DietGeneratorProps) {
             doc.setTextColor(0); // Preto
             yPos += 5;
 
-            // Montagem das Linhas da Tabela
             const tableBody = Object.values(day.meals).map((meal: Meal) => {
                 const foodsList = Array.isArray(meal.foods) ? meal.foods : [];
 
-                // 1. Cria a lista de alimentos padrão
                 let foodsString = foodsList.map((f: unknown) => {
                     const { name, qtd } = getSafeFoodData(f);
                     return `• ${name} ${qtd}`;
                 }).join('\n');
 
-                // 2. LÓGICA DE SUBSTITUIÇÃO: Adiciona apenas no PDF se existir
                 if (meal.substitutions) {
-                    // Adiciona quebra de linha dupla e um separador visual
                     foodsString += `\n\n------- Opções de Troca -------\n${meal.substitutions}`;
                 }
 
                 return [
                     meal.name || "Refeição",
                     foodsString,
-                    `${meal.calories || 0} kcal\nP: ${meal.macros?.protein || 0}g`
+                    `${meal.calories || 0} kcal\nP: ${meal.macros?.protein || 0}g\n C: ${meal.macros?.carbs || 0}g\n G: ${meal.macros?.fats || 0}g `
                 ];
             });
 
-            // Geração da Tabela com autoTable
             autoTable(doc, {
                 startY: yPos,
                 head: [['Refeição', 'Alimentos & Substituições', 'Macros']],
@@ -138,17 +123,15 @@ export function DietGenerator({ calories, macros }: DietGeneratorProps) {
                 headStyles: { fillColor: [37, 99, 235] },
                 styles: { fontSize: 9, cellPadding: 3, valign: 'middle' },
                 columnStyles: {
-                    0: { cellWidth: 30 }, // Coluna Refeição
-                    1: { cellWidth: 'auto' }, // Coluna Alimentos (expande)
-                    2: { cellWidth: 25 } // Coluna Macros
+                    0: { cellWidth: 30 },
+                    1: { cellWidth: 'auto' },
+                    2: { cellWidth: 25 }
                 }
             });
 
-            // Atualiza a posição Y para o próximo dia
             const finalY = (doc as PdfWithPlugin).lastAutoTable?.finalY || yPos;
             yPos = finalY + 10;
 
-            // Cria nova página se estiver perto do fim
             if (yPos > 250) {
                 doc.addPage();
                 yPos = 20;

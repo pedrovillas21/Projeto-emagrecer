@@ -2,32 +2,27 @@
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// Interfaces mantidas conforme seu código
-export interface FoodItem {
-    item: string;
-    quantity: string;
+// --- INTERFACES FINAIS (O que seu site usa) ---
+export interface FoodItem { item: string; quantity: string; }
+export interface Meal { name: string; foods: FoodItem[]; calories: number; macros: { protein: number; carbs: number; fats: number; }; substitutions: string; }
+export interface DailyPlan { day: string; meals: { breakfast: Meal; lunch: Meal; snack: Meal; dinner: Meal; }; }
+
+interface AiSubstitutionOption { food?: string; }
+interface AiSubstitutionItem { item?: string; options?: AiSubstitutionOption[]; }
+interface RawMealData {
+    name?: string;
+    foods?: FoodItem[] | { description?: string };
+    calories?: number;
+    macros?: { protein?: number; carbs?: number; fats?: number };
+    protein?: number;
+    carbohydrates?: number;
+    fat?: number;
+    substitutions?: string | AiSubstitutionItem[];
 }
 
-export interface Meal {
-    name: string;
-    foods: FoodItem[];
-    calories: number;
-    macros: {
-        protein: number;
-        carbs: number;
-        fats: number;
-    };
-    substitutions: string;
-}
-
-export interface DailyPlan {
+interface RawDayResponse {
     day: string;
-    meals: {
-        breakfast: Meal;
-        lunch: Meal;
-        snack: Meal;
-        dinner: Meal;
-    };
+    meals: Record<string, RawMealData>;
 }
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
@@ -43,84 +38,116 @@ export async function generateWeeklyMenu(
         const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
         const wheyInstruction = useWhey
-            ? "O usuário USA Whey Protein. Inclua 1 dose (25g) no Lanche ou Café."
-            : "O usuário NÃO usa suplementos. Bata a proteína com comida sólida.";
+            ? "REGRAS DE SUPLEMENTO: O usuário USA WHEY PROTEIN. Você É OBRIGADO a incluir 1 dose (30g) de Whey Protein no 'Lanche' (snack) todos os dias."
+            : "REGRAS DE SUPLEMENTO: O usuário NÃO usa suplementos. Não inclua Whey.";
 
-        const userLikes = preferences ? `INCLUIR OBRIGATORIAMENTE (pelo menos 3x na semana): ${preferences}` : "Sem preferências específicas.";
-        const userHates = restrictions ? `PROIBIDO INCLUIR (Alergia ou Gosto): ${restrictions}` : "Sem restrições alimentares.";
-
-        // --- AQUI ESTÁ A MUDANÇA PRINCIPAL NO PROMPT ---
+        const targets = {bk: { k: Math.round(calories * 0.20), p: Math.round(macros.protein * 0.20), c: Math.round(macros.carbs * 0.20), f: Math.round(macros.fats * 0.20) },
+                        ln: { k: Math.round(calories * 0.35), p: Math.round(macros.protein * 0.35), c: Math.round(macros.carbs * 0.35), f: Math.round(macros.fats * 0.35) },
+                        sn: { k: Math.round(calories * 0.15), p: Math.round(macros.protein * 0.15), c: Math.round(macros.carbs * 0.15), f: Math.round(macros.fats * 0.15) },
+                        dn: { k: Math.round(calories * 0.30), p: Math.round(macros.protein * 0.30), c: Math.round(macros.carbs * 0.30), f: Math.round(macros.fats * 0.30) },};
         const prompt = `
-      Atue como um nutricionista esportivo rigoroso com a Tabela TACO.
-      
-      METAS DIÁRIAS:
-      - Calorias: ~${calories} kcal
-      - Proteínas: ${macros.protein}g
-      - Carboidratos: ${macros.carbs}g
-      - Gorduras: ${macros.fats}g
-
-      PREFERÊNCIAS:
-      1. ${userLikes}
-      2. ${userHates}
-      
-      REGRAS DE OURO:
-      1. PRECISÃO NUTRICIONAL: Ajuste as quantidades para bater a meta calórica real.
-      2. CUSTO-BENEFÍCIO: Priorize alimentos da cesta básica brasileira.
-      3. VARIAR CARDÁPIO: Não repita o mesmo almoço todo dia.
-      4. GORDURA: Contabilize o azeite/óleo de preparo.
-      
-      5. SUBSTITUIÇÕES (CRUCIAL): 
-         - O campo "substitutions" é para TROCA TOTAL do alimento principal, caso o usuário não tenha o ingrediente.
-         - PROIBIDO sugerir "adições" ou "complementos" (Ex: "Adicione mais 1 ovo para bater a meta" -> ISSO É PROIBIDO).
-         - OBRIGATÓRIO ser uma TROCA (Ex: "Se não tiver Frango (150g), coma 2 Ovos Cozidos + 50g de Queijo Branco").
-         - VOCÊ DEVE CALCULAR A QUANTIDADE EXATA PARA A TROCA TER AS MESMAS CALORIAS.
-         
-
-      ESTRUTURA: Café, Almoço, Lanche, Jantar.
-
-      SUPLEMENTAÇÃO:
-      ${wheyInstruction}
-
-      FORMATO JSON OBRIGATÓRIO:
-      [
-        {
-          "day": "Segunda-feira",
-          "meals": {
-            "breakfast": { 
-               "name": "Café da Manhã", 
-               "foods": [
-                  { "item": "Pão Francês", "quantity": "1 unidade (50g)" }
-               ], 
-               "calories": 150, 
-               "macros": { "protein": 4, "carbs": 29, "fats": 1 },
-               "substitutions": "Opção: 2 fatias de Pão Integral (50g) + 1 fatia de Queijo Minas (30g) para manter as 150kcal."
-            },
-            "lunch": { 
-               "name": "Almoço",
-               "foods": [...],
-               "calories": 600,
-               "macros": {...},
-               "substitutions": "Troca econômica: Substitua o Frango por 2 Ovos Cozidos + 50g de Feijão extra."
-            },
-            "snack": { ... }, 
-            "dinner": { ... }
-          }
-        }
-      ]
-      IMPORTANTE: Gere o cardápio de SEGUNDA a DOMINGO.
-    `;
+              Atue como Nutricionista Matemático (Tabela TACO).
+              Gere um cardápio semanal (Segunda a Domingo).
+              
+              PREFERÊNCIAS: ${preferences || "Nenhuma"}
+              RESTRIÇÕES: ${restrictions || "Nenhuma"}
+              ${wheyInstruction}
+        
+              ORDENS ESTRITAS DE MACROS (Siga estes números com margem de erro de 10%):
+              1. Café da Manhã (breakfast): ~${targets.bk.k}kcal | P:${targets.bk.p}g | C:${targets.bk.c}g | G:${targets.bk.f}g
+              2. Almoço (lunch):            ~${targets.ln.k}kcal | P:${targets.ln.p}g | C:${targets.ln.c}g | G:${targets.ln.f}g
+              3. Lanche (snack):            ~${targets.sn.k}kcal | P:${targets.sn.p}g | C:${targets.sn.c}g | G:${targets.sn.f}g
+              4. Jantar (dinner):           ~${targets.dn.k}kcal | P:${targets.dn.p}g | C:${targets.dn.c}g | G:${targets.dn.f}g
+        
+              REGRAS DE CONTEÚDO:
+              - Use quantidades REAIS (ex: "150g de arroz", não "2 colheres").
+              - Custo-benefício (Cesta básica BR).
+              - SUBSTITUIÇÕES: Deve ser uma STRING ÚNICA e SIMPLES (ex: "Troque Frango por 3 Ovos").
+              - NÃO INVENTE MACROS: 100g de Frango Grelhado tem ~30g de proteína. Não diga que tem 10g.
+        
+              FORMATO JSON OBRIGATÓRIO (Use as chaves exatas em inglês):
+              [
+                {
+                  "day": "Segunda-feira",
+                  "meals": {
+                    "breakfast": { 
+                       "name": "Café da Manhã", 
+                       "foods": [{ "item": "Pão", "quantity": "1 un" }], 
+                       "calories": ${targets.bk.k}, 
+                       "macros": { "protein": ${targets.bk.p}, "carbs": ${targets.bk.c}, "fats": ${targets.bk.f} },
+                       "substitutions": "Troque pão por tapioca."
+                    },
+                    "lunch": { ... },
+                    "snack": { ... },
+                    "dinner": { ... }
+                  }
+                }
+              ]
+            `;
 
         const result = await model.generateContent({
             contents: [{ role: "user", parts: [{ text: prompt }] }],
-            generationConfig: {
-                responseMimeType: "application/json",
-                maxOutputTokens: 8192,
-                temperature: 0.7,
-            },
+            generationConfig: { responseMimeType: "application/json", maxOutputTokens: 8192, temperature: 0.5 },
         });
 
         const textResponse = result.response.text();
-        return JSON.parse(textResponse) as DailyPlan[];
+        if (!textResponse) return null;
+
+
+        const rawData = JSON.parse(textResponse) as RawDayResponse[];
+
+        const sanitizedData: DailyPlan[] = rawData.map((day) => {
+            const m = day.meals || {};
+
+            const findMeal = (keys: string[], defaultName: string): Meal => {
+                const key = keys.find(k => m[k]);
+                const data = key ? m[key] : {};
+
+                let subText = "Sem trocas.";
+
+                if (typeof data.substitutions === 'string') {
+                    subText = data.substitutions;
+                }
+                else if (Array.isArray(data.substitutions)) {
+                    subText = data.substitutions.map((s) =>
+                        `Troque ${s.item || 'item'} por ${s.options?.[0]?.food || 'equivalente'}`
+                    ).join(". ");
+                }
+
+                let foodList: FoodItem[] = [];
+                if (Array.isArray(data.foods)) {
+                    foodList = data.foods;
+                } else if (data.foods && 'description' in data.foods) {
+                    // O TS reclama se acessar direto, então validamos antes
+                    const desc = data.foods.description || "Refeição padrão";
+                    foodList = [{ item: desc, quantity: "1 porção" }];
+                }
+
+                const p = data.macros?.protein || data.protein || 0;
+                const c = data.macros?.carbs || data.carbohydrates || 0;
+                const f = data.macros?.fats || data.fat || 0;
+
+                return {
+                    name: data.name || defaultName,
+                    foods: foodList,
+                    calories: data.calories || 0,
+                    macros: { protein: p, carbs: c, fats: f },
+                    substitutions: subText
+                };
+            };
+
+            return {
+                day: day.day,
+                meals: {
+                    breakfast: findMeal(['breakfast', 'Café', 'Café da Manhã'], 'Café da Manhã'),
+                    lunch:     findMeal(['lunch', 'Almoço'], 'Almoço'),
+                    snack:     findMeal(['snack', 'Lanche', 'Lanche da Tarde'], 'Lanche'),
+                    dinner:    findMeal(['dinner', 'Jantar'], 'Jantar')
+                }
+            };
+        });
+
+        return sanitizedData;
 
     } catch (error) {
         console.error("Erro na IA:", error);
